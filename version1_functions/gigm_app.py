@@ -96,4 +96,45 @@ def make_id(prefix, length):
 
 def pause():
     input("\nPress enter to return to the menu...")
-            
+
+def line(length = 50):
+    return "=" * length
+
+# Registration feature
+def register(db, cursor):
+    print("\n" + line())
+    print("PASSENGER REGISTRATION")
+    print(line())
+
+    full_name = ask_text("Enter your full name: ")
+    phone = ask_phone("Enter your phone number (11 digits): ")
+    age = ask_int("Enter your age: ", 1, 120)
+
+    cursor.execute(
+        "select passenger_id, full_name from passengers where phone = %s", (phone,)
+    )
+    existing = cursor.fetchone()
+
+    if existing is not None:
+        print(f"\nThis phone number is already registered to {existing[1]} with the passenger ID {existing[0]}.")
+        return
+
+    passenger_id = make_id("GIG", 7)
+
+    try:
+        cursor.execute(
+            """insert into passengers(passenger_id, full_name, phone, age)
+            values(%s, %s, %s, %s)""",
+            (passenger_id, full_name.title(), phone, age)
+        )
+        db.commit()
+
+    except Exception as e:
+        db.rollback()
+        print(f"\nRegistration failed: {e}.\n Nothing was saved, please try again.")
+        return
+
+    print("\nRegistration successful.")
+    print(f"Your details are as follows: \nName: {full_name.title()}\nPhone: {phone}\nPassenger ID: {passenger_id}")
+    print("\nPlease save your passenger ID. You need it to book a seat.")
+    
